@@ -5,6 +5,7 @@ import { AuthProvider } from './features/auth/store/auth.store'
 import App from './app/App'
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Toaster } from 'sonner'
+import { Analytics } from "@vercel/analytics/next"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,6 +23,7 @@ createRoot(document.getElementById('root')!).render(
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
         <App />
+        <Analytics />
         <Toaster richColors position={"bottom-right"} />
       </QueryClientProvider>
     </AuthProvider>
