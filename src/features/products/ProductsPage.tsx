@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import {
     Card,
     CardHeader,
@@ -18,19 +19,18 @@ import {
 } from "@/components/ui/table";
 
 import { formatIDR } from "@/lib/types/currency";
-import { createProduct, deleteProduct, getProducts, updateProduct, type CreateProductInput } from "./services/products.service";
+import { deleteProduct, getProducts } from "./services/products.service";
 import { Badge } from "@/components/ui/badge";
 import TableSkeleton from "./ProductSkeleton";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Plus, X } from "lucide-react";
-import type { Product } from "./models/product";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export function ProductsPage() {
+    const navigate = useNavigate();
     const [filters, setFilters] = useState({
         search: "",
         status: "",
@@ -93,69 +93,7 @@ export function ProductsPage() {
 
     const qc = useQueryClient();
 
-    const [openForm, setOpenForm] = useState(false);
-    const [mode, setMode] = useState<"create" | "edit">("create");
-    const [editing, setEditing] = useState<Product | null>(null);
-
-    const emptyForm: CreateProductInput = {
-        name: "",
-        description: "",
-        sku: "",
-        category: "",
-        price: 0,
-        stock: 0,
-        status: "active",
-        imageUrl: "",
-        imageType: "url",
-    };
-
-    const [form, setForm] = useState<CreateProductInput>(emptyForm);
-
     const [deleteId, setDeleteId] = useState<string | null>(null);
-
-    function openCreate() {
-        setMode("create");
-        setEditing(null);
-        setForm(emptyForm);
-        setOpenForm(true);
-    }
-
-    function openEdit(p: Product) {
-        setMode("edit");
-        setEditing(p);
-        setForm({
-            name: p.name ?? "",
-            description: p.description ?? "",
-            sku: p.sku ?? "",
-            category: p.category ?? "",
-            price: Number(p.price ?? 0),
-            stock: Number(p.stock ?? 0),
-            status: p.status ?? "active",
-            imageUrl: p.imageUrl ?? "",
-            imageType: p.imageType ?? "url",
-        });
-        setOpenForm(true);
-    }
-
-    const createM = useMutation({
-        mutationFn: createProduct,
-        onSuccess: (_res) => {
-            toast.success("Product created");
-            setOpenForm(false);
-            qc.invalidateQueries({ queryKey: ["products"] });
-        },
-        onError: (e: any) => toast.error(e?.message ?? "Failed to create product"),
-    });
-
-    const updateM = useMutation({
-        mutationFn: ({ id, payload }: { id: string; payload: any }) => updateProduct(id, payload),
-        onSuccess: () => {
-            toast.success("Product updated");
-            setOpenForm(false);
-            qc.invalidateQueries({ queryKey: ["products"] });
-        },
-        onError: (e: any) => toast.error(e?.message ?? "Failed to update product"),
-    });
 
     const deleteM = useMutation({
         mutationFn: deleteProduct,
@@ -167,19 +105,6 @@ export function ProductsPage() {
         onError: (e: any) => toast.error(e?.message ?? "Failed to delete product"),
     });
 
-    function onSubmitProduct() {
-        if (!form.name.trim()) return toast.error("Name is required");
-        if (!form.sku.trim()) return toast.error("SKU is required");
-
-        if (mode === "create") {
-            createM.mutate(form);
-            return;
-        }
-
-        if (mode === "edit" && editing?.id) {
-            updateM.mutate({ id: editing.id, payload: form });
-        }
-    }
 
     return (
         <Card>
@@ -189,7 +114,7 @@ export function ProductsPage() {
                     <CardDescription>Daftar produk yang tersedia</CardDescription>
                 </div>
 
-                <Button onClick={openCreate}>
+                <Button onClick={() => navigate("/products/new")}>
                     <Plus className="h-4 w-4 mr-2" />
                     Tambah Produk
                 </Button>
@@ -359,7 +284,7 @@ export function ProductsPage() {
 
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button variant="outline" size="sm" onClick={() => openEdit(p)}>
+                                            <Button variant="outline" size="sm" onClick={() => navigate(`/products/${p.id}/edit`)}>
                                                 Edit
                                             </Button>
                                             <Button variant="destructive" size="sm" onClick={() => setDeleteId(p.id)}>
@@ -376,99 +301,6 @@ export function ProductsPage() {
                     </Table>
                 )}
 
-                <Dialog open={openForm} onOpenChange={setOpenForm}>
-                    <DialogContent className="sm:max-w-[600px]">
-                        <DialogHeader>
-                            <DialogTitle>{mode === "create" ? "Tambah Produk" : "Edit Produk"}</DialogTitle>
-                        </DialogHeader>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                                <div className="text-sm">Nama</div>
-                                <Input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
-                            </div>
-
-                            <div className="space-y-1">
-                                <div className="text-sm">Kode Produk</div>
-                                <Input value={form.sku} onChange={(e) => setForm((p) => ({ ...p, sku: e.target.value }))} />
-                            </div>
-
-                            <div className="space-y-1 md:col-span-2">
-                                <div className="text-sm">Deskripsi</div>
-                                <Input
-                                    value={form.description}
-                                    onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <div className="text-sm">Kategori</div>
-                                <Input value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))} />
-                            </div>
-
-                            <div className="space-y-1">
-                                <div className="text-sm">Status Produk</div>
-                                <Select
-                                    value={form.status}
-                                    onValueChange={(v) => setForm((p) => ({ ...p, status: v as any }))}
-                                >
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectLabel>Status Produk</SelectLabel>
-                                            <SelectItem value="active">Aktif</SelectItem>
-                                            <SelectItem value="inactive">Tidak Aktif</SelectItem>
-                                            <SelectItem value="archived">Diarsipkan</SelectItem>
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-1">
-                                <div className="text-sm">Harga</div>
-                                <Input
-                                    type="number"
-                                    value={form.price}
-                                    onChange={(e) => setForm((p) => ({ ...p, price: Number(e.target.value) }))}
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <div className="text-sm">Stok</div>
-                                <Input
-                                    type="number"
-                                    value={form.stock}
-                                    onChange={(e) => setForm((p) => ({ ...p, stock: Number(e.target.value) }))}
-                                />
-                            </div>
-
-                            <div className="space-y-1 md:col-span-2">
-                                {/* upload gambar produk */}
-                                <div className="text-sm">URL Gambar (optional)</div>
-                                <Input
-                                    value={form.imageUrl ?? ""}
-                                    onChange={(e) => setForm((p) => ({ ...p, imageUrl: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-
-                        <DialogFooter className="gap-2">
-                            <Button variant="outline" onClick={() => setOpenForm(false)}>
-                                Batal
-                            </Button>
-                            <Button
-                                onClick={onSubmitProduct}
-                                disabled={createM.isPending || updateM.isPending}
-                            >
-                                {mode === "create"
-                                    ? createM.isPending ? "Membuat..." : "Buat"
-                                    : updateM.isPending ? "Menyimpan..." : "Simpan"}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
                 <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
                     <AlertDialogContent>
                         <AlertDialogHeader>

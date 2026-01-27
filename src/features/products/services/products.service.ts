@@ -1,8 +1,6 @@
 import type { Product } from "../models/product";
 import { http } from "@/lib/api/http";
 
-const BASE_URL = import.meta.env.VITE_PUBLIC_API;
-
 export type GetProductsParams = {
     search?: string;
     status?: string;
@@ -39,8 +37,8 @@ async function getProducts(params: GetProductsParams): Promise<ApiListResponse<P
     return res.data;
 }
 
-async function getDetailedProduct(id: string): Promise<Product> {
-    const res = await http.get(`${BASE_URL}/products/${id}`);
+async function getDetailedProduct(id: string): Promise<ApiItemResponse<Product>> {
+    const res = await http.get<ApiItemResponse<Product>>(`products/${id}`);
     return res.data;
 }
 

@@ -9,6 +9,8 @@ type Breadcrumb = {
 const ROUTE_LABELS: Record<string, string> = {
     "": "Home",
     products: "Products",
+    new: "New Product",
+    edit: "Edit Product",
     reports: "Reports",
     invoices: "Invoices",
     "role-management": "Role Management",
