@@ -114,10 +114,19 @@ export function ProductsPage() {
                     <CardDescription>Daftar produk yang tersedia</CardDescription>
                 </div>
 
-                <Button onClick={() => navigate("/products/new")}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Tambah Produk
-                </Button>
+                <div className="flex flex-col gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate("/products/units/new")}
+                    >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Tambahkan satuan (cth: kg, ton)
+                    </Button>
+                    <Button onClick={() => navigate("/products/new")}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Tambah Produk
+                    </Button>
+                </div>
             </CardHeader>
 
             <CardContent className="space-y-4">

@@ -11,6 +11,10 @@ export type Product = {
     status: ProductStatus;
     imageUrl?: string | null;
     imageType?: string;
+    unit?: {
+        id: string;
+        name: string;
+    };
     createdAt: string;
     updatedAt: string;
 };

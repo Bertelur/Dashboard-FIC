@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { getDetailedProduct, updateProduct, type CreateProductInput } from "./services/products.service";
+import { getUnits } from "../units/services/units.service";
 // import type { Product } from "./models/product";
 import TableSkeleton from "./ProductSkeleton";
 
@@ -33,12 +34,20 @@ export function EditProductPage() {
         status: "active",
         imageUrl: "",
         imageType: "url",
+        unitId: "",
     });
 
     const { data: product, isLoading } = useQuery({
         queryKey: ["product", id],
         queryFn: () => getDetailedProduct(id!),
         enabled: !!id,
+    });
+
+    const { data: unitsData, isLoading: unitsLoading } = useQuery({
+        queryKey: ["units"],
+        queryFn: getUnits,
+        staleTime: 30_000,
+        placeholderData: (prev) => prev,
     });
 
     useEffect(() => {
@@ -53,6 +62,7 @@ export function EditProductPage() {
                 status: product.data.status ?? "active",
                 imageUrl: product.data.imageUrl ?? "",
                 imageType: product.data.imageType ?? "url",
+                unitId: product.data.unit?.id ?? "",
             });
         }
     }, [product]);
@@ -192,6 +202,42 @@ export function EditProductPage() {
                             value={form.stock}
                             onChange={(e) => setForm((p) => ({ ...p, stock: Number(e.target.value) }))}
                         />
+                    </div>
+
+                    {/* Satuan Produk */}
+                    <div className="space-y-1">
+                        <div className="text-sm">Satuan Produk</div>
+                        <Select
+                            value={form.unitId ?? ""}
+                            onValueChange={(v) => {
+                                if (v === "__create_unit__") {
+                                    navigate("/products/units/new");
+                                } else {
+                                    setForm((p) => ({ ...p, unitId: v }));
+                                }
+                            }}
+                            disabled={unitsLoading}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder={unitsLoading ? "Memuat..." : "Pilih satuan"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectLabel>Satuan Produk</SelectLabel>
+                                    {!unitsData?.data || unitsData.data.length === 0 ? (
+                                        <SelectItem value="__create_unit__">
+                                            Tambahkan satuan (cth: kg, ton)
+                                        </SelectItem>
+                                    ) : (
+                                        unitsData.data.map((unit) => (
+                                            <SelectItem key={unit._id} value={unit._id}>
+                                                {unit.name}
+                                            </SelectItem>
+                                        ))
+                                    )}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="space-y-1 md:col-span-2">

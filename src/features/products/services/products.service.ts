@@ -28,6 +28,7 @@ export type CreateProductInput = {
     status: Product["status"];
     imageUrl?: string;
     imageType?: Product["imageType"];
+    unitId?: string;
 };
 
 export type UpdateProductInput = Partial<CreateProductInput>;

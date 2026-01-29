@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
     Card,
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { createProduct, type CreateProductInput } from "./services/products.service";
+import { getUnits } from "../units/services/units.service";
 
 const emptyForm: CreateProductInput = {
     name: "",
@@ -26,12 +27,20 @@ const emptyForm: CreateProductInput = {
     status: "active",
     imageUrl: "",
     imageType: "url",
+    unitId: "",
 };
 
 export function CreateProductPage() {
     const navigate = useNavigate();
     const qc = useQueryClient();
     const [form, setForm] = useState<CreateProductInput>(emptyForm);
+
+    const { data: unitsData, isLoading: unitsLoading } = useQuery({
+        queryKey: ["units"],
+        queryFn: getUnits,
+        staleTime: 30_000,
+        placeholderData: (prev) => prev,
+    });
 
     const createM = useMutation({
         mutationFn: createProduct,
@@ -139,6 +148,42 @@ export function CreateProductPage() {
                             value={form.stock}
                             onChange={(e) => setForm((p) => ({ ...p, stock: Number(e.target.value) }))}
                         />
+                    </div>
+
+                    {/* Satuan Produk */}
+                    <div className="space-y-1">
+                        <div className="text-sm">Satuan Produk</div>
+                        <Select
+                            value={form.unitId ?? ""}
+                            onValueChange={(v) => {
+                                if (v === "__create_unit__") {
+                                    navigate("/products/units/new");
+                                } else {
+                                    setForm((p) => ({ ...p, unitId: v }));
+                                }
+                            }}
+                            disabled={unitsLoading}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder={unitsLoading ? "Memuat..." : "Pilih satuan"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectLabel>Satuan Produk</SelectLabel>
+                                    {!unitsData?.data || unitsData.data.length === 0 ? (
+                                        <SelectItem value="__create_unit__">
+                                            Tambahkan satuan (cth: kg, ton)
+                                        </SelectItem>
+                                    ) : (
+                                        unitsData.data.map((unit) => (
+                                            <SelectItem key={unit._id} value={unit._id}>
+                                                {unit.name}
+                                            </SelectItem>
+                                        ))
+                                    )}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="space-y-1 md:col-span-2">
