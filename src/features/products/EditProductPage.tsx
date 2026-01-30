@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     Card,
     CardHeader,
@@ -9,15 +9,16 @@ import {
     CardContent,
     CardFooter,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { getDetailedProduct, updateProduct, type CreateProductInput } from "./services/products.service";
-import { getUnits } from "../units/services/units.service";
-// import type { Product } from "./models/product";
+import { ArrowLeft } from "lucide-react";
 import TableSkeleton from "./ProductSkeleton";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { getUnits } from "../units/services/units.service";
+import { getDetailedProduct, getProducts, updateProduct, type CreateProductInput } from "./services/products.service";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const NEW_CATEGORY_VALUE = "__new_category__";
 
 export function EditProductPage() {
     const navigate = useNavigate();
@@ -36,11 +37,19 @@ export function EditProductPage() {
         imageType: "url",
         unitId: "",
     });
+    const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
 
     const { data: product, isLoading } = useQuery({
         queryKey: ["product", id],
         queryFn: () => getDetailedProduct(id!),
         enabled: !!id,
+    });
+
+    const { data: productsData, isLoading: productsLoading } = useQuery({
+        queryKey: ["products"],
+        queryFn: () => getProducts({}),
+        staleTime: 30_000,
+        placeholderData: (prev) => prev,
     });
 
     const { data: unitsData, isLoading: unitsLoading } = useQuery({
@@ -49,6 +58,14 @@ export function EditProductPage() {
         staleTime: 30_000,
         placeholderData: (prev) => prev,
     });
+
+    const categories = useMemo(() => {
+        const set = new Set<string>();
+        const products = productsData?.data ?? [];
+        for (const p of products) if (p.category?.trim()) set.add(p.category.trim());
+        if (form.category?.trim()) set.add(form.category.trim());
+        return Array.from(set).sort();
+    }, [productsData?.data, form.category]);
 
     useEffect(() => {
         if (product?.data) {
@@ -158,12 +175,56 @@ export function EditProductPage() {
                         />
                     </div>
 
+                    {/* Kategori */}
                     <div className="space-y-1">
                         <div className="text-sm">Kategori</div>
-                        <Input
-                            value={form.category}
-                            onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-                        />
+                        {categories.length === 0 ? (
+                            <Input
+                                value={form.category}
+                                onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+                                placeholder="Ketikan kategori (belum ada kategori)"
+                            />
+                        ) : (
+                            <div className="space-y-2">
+                                <Select
+                                    value={showNewCategoryInput ? NEW_CATEGORY_VALUE : (form.category ?? "")}
+                                    onValueChange={(v) => {
+                                        if (v === NEW_CATEGORY_VALUE) {
+                                            setShowNewCategoryInput(true);
+                                            setForm((p) => ({ ...p, category: "" }));
+                                        } else {
+                                            setShowNewCategoryInput(false);
+                                            setForm((p) => ({ ...p, category: v }));
+                                        }
+                                    }}
+                                    disabled={productsLoading}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder={productsLoading ? "Memuat..." : "Pilih kategori"} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>Kategori</SelectLabel>
+                                            {categories.map((cat) => (
+                                                <SelectItem key={cat} value={cat}>
+                                                    {cat}
+                                                </SelectItem>
+                                            ))}
+                                            <SelectItem value={NEW_CATEGORY_VALUE}>
+                                                Tambah kategori baru
+                                            </SelectItem>
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                                {showNewCategoryInput && (
+                                    <Input
+                                        value={form.category}
+                                        onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+                                        placeholder="Nama kategori baru"
+                                    />
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <div className="space-y-1">
@@ -186,58 +247,59 @@ export function EditProductPage() {
                         </Select>
                     </div>
 
-                    <div className="space-y-1">
-                        <div className="text-sm">Harga</div>
-                        <Input
-                            type="number"
-                            value={form.price}
-                            onChange={(e) => setForm((p) => ({ ...p, price: Number(e.target.value) }))}
-                        />
-                    </div>
+                    <div className="flex flex-row gap-3 w-full">
+                        <div className="space-y-1">
+                            <div className="text-sm">Harga (Rupiah)</div>
+                            <Input
+                                type="number"
+                                value={form.price}
+                                onChange={(e) => setForm((p) => ({ ...p, price: Number(e.target.value) }))}
+                            />
+                        </div>
 
-                    <div className="space-y-1">
-                        <div className="text-sm">Stok</div>
-                        <Input
-                            type="number"
-                            value={form.stock}
-                            onChange={(e) => setForm((p) => ({ ...p, stock: Number(e.target.value) }))}
-                        />
-                    </div>
+                        <div className="space-y-1">
+                            <div className="text-sm">Stok (Jumlah)</div>
+                            <Input
+                                value={form.stock}
+                                onChange={(e) => setForm((p) => ({ ...p, stock: Number(e.target.value) }))}
+                            />
+                        </div>
 
-                    {/* Satuan Produk */}
-                    <div className="space-y-1">
-                        <div className="text-sm">Satuan Produk</div>
-                        <Select
-                            value={form.unitId ?? ""}
-                            onValueChange={(v) => {
-                                if (v === "__create_unit__") {
-                                    navigate("/products/units/new");
-                                } else {
-                                    setForm((p) => ({ ...p, unitId: v }));
-                                }
-                            }}
-                            disabled={unitsLoading}
-                        >
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder={unitsLoading ? "Memuat..." : "Pilih satuan"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectLabel>Satuan Produk</SelectLabel>
-                                    {!unitsData?.data || unitsData.data.length === 0 ? (
-                                        <SelectItem value="__create_unit__">
-                                            Tambahkan satuan (cth: kg, ton)
-                                        </SelectItem>
-                                    ) : (
-                                        unitsData.data.map((unit) => (
-                                            <SelectItem key={unit._id} value={unit._id}>
-                                                {unit.name}
+                        {/* Satuan Produk */}
+                        <div className="space-y-1">
+                            <div className="text-sm">Satuan Produk</div>
+                            <Select
+                                value={form.unitId ?? ""}
+                                onValueChange={(v) => {
+                                    if (v === "__create_unit__") {
+                                        navigate("/products/units/new");
+                                    } else {
+                                        setForm((p) => ({ ...p, unitId: v }));
+                                    }
+                                }}
+                                disabled={unitsLoading}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder={unitsLoading ? "Memuat..." : "Pilih satuan"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Satuan Produk</SelectLabel>
+                                        {!unitsData?.data || unitsData.data.length === 0 ? (
+                                            <SelectItem value="__create_unit__">
+                                                Tambahkan satuan (cth: kg, ton)
                                             </SelectItem>
-                                        ))
-                                    )}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
+                                        ) : (
+                                            unitsData.data.map((unit) => (
+                                                <SelectItem key={unit._id} value={unit._id}>
+                                                    {unit.name}
+                                                </SelectItem>
+                                            ))
+                                        )}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     <div className="space-y-1 md:col-span-2">

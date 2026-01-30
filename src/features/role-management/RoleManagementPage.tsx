@@ -12,7 +12,7 @@ export function RoleManagementPage() {
             <CardHeader>
                 <div>
                     <CardTitle className="text-2xl font-bold">Akun Pengguna</CardTitle>
-                    <CardDescription>Super Admin dapat mengelola semua role. Admin dapat mengelola staff & keuangan saja. <span className="text-red-500">Disclaimer: Saat ini fitur belum bisa dipakai karena belum tersedia.</span>    </CardDescription>
+                    <CardDescription>Hanya Super Admin yang dapat mengelola role (menetapkan role staff). <span className="text-red-500">Disclaimer: Saat ini fitur belum bisa dipakai karena belum tersedia.</span></CardDescription>
                 </div>
             </CardHeader>
 

@@ -1,13 +1,14 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Package, FileText, Receipt, Shield } from "lucide-react";
+import { LayoutDashboard, Package, FileText, Receipt, Shield, ShoppingCart } from "lucide-react";
 import { createContext, useContext, useMemo, useState } from "react";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 
 const links = [
-    { to: "/", label: "Home", icon: LayoutDashboard, role: ["super-admin", "admin", "staff", "keuangan"] },
-    { to: "/products", label: "Products", icon: Package, role: ["super-admin", "admin"] },
-    { to: "/reports", label: "Reports", icon: FileText, role: ["super-admin", "admin", "keuangan"] },
-    { to: "/invoices", label: "Invoices", icon: Receipt, role: ["super-admin", "admin", "keuangan"] },
+    { to: "/", label: "Home", icon: LayoutDashboard, role: ["super-admin", "staff"] },
+    { to: "/products", label: "Products", icon: Package, role: ["super-admin", "staff"] },
+    { to: "/orders", label: "Orders", icon: ShoppingCart, role: ["super-admin", "staff"] },
+    { to: "/reports", label: "Reports", icon: FileText, role: ["super-admin", "staff"] },
+    { to: "/invoices", label: "Invoices", icon: Receipt, role: ["super-admin", "staff"] },
     { to: "/role-management", label: "Role Management", icon: Shield, role: ["super-admin"] },
 ];
 

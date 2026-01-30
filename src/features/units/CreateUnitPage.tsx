@@ -1,23 +1,23 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import {
     Card,
-    CardHeader,
     CardTitle,
-    CardDescription,
-    CardContent,
     CardFooter,
+    CardHeader,
+    CardContent,
+    CardDescription,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { createUnit } from "./services/units.service";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function CreateUnitPage() {
-    const navigate = useNavigate();
     const qc = useQueryClient();
+    const navigate = useNavigate();
     const [unitName, setUnitName] = useState("");
 
     const createM = useMutation({
@@ -34,7 +34,6 @@ export function CreateUnitPage() {
         if (!unitName.trim()) {
             return toast.error("Nama satuan wajib diisi");
         }
-
         createM.mutate(unitName.trim());
     }
 

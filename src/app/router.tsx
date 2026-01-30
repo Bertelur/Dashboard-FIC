@@ -9,6 +9,7 @@ import { ProductsPage } from "@/features/products/ProductsPage";
 import { CreateProductPage } from "@/features/products/CreateProductPage";
 import { EditProductPage } from "@/features/products/EditProductPage";
 import { CreateUnitPage } from "@/features/units/CreateUnitPage";
+import { OrdersPage } from "@/features/orders/OrdersPage";
 import { ReportsPage } from "@/features/reports/ReportsPage";
 import { InvoicesPage } from "@/features/invoices/InvoicesPage";
 import { RoleManagementPage } from "@/features/role-management/RoleManagementPage";
@@ -27,10 +28,11 @@ export const router = createBrowserRouter([
                     { path: "/products/new", element: <CreateProductPage /> },
                     { path: "/products/:id/edit", element: <EditProductPage /> },
                     { path: "/products/units/new", element: <CreateUnitPage /> },
+                    { path: "/orders", element: <OrdersPage /> },
                     { path: "/reports", element: <ReportsPage /> },
                     { path: "/invoices", element: <InvoicesPage /> },
                     {
-                        element: <RequireRole allowed={["super-admin", "admin"]} />,
+                        element: <RequireRole allowed={["super-admin"]} />,
                         children: [{ path: "/role-management", element: <RoleManagementPage /> }],
                     },
                 ],

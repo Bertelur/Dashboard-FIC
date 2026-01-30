@@ -1,4 +1,4 @@
-export type Role = "super-admin" | "admin" | "staff" | "keuangan";
+export type Role = "super-admin" | "staff";
 
 export type Permission =
     | "role_management:view"

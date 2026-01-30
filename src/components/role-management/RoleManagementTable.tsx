@@ -5,16 +5,13 @@ import { canManageTargetRole, manageableRoles } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-
-const dummyUsers: AppUser[] = [
-    { id: "1", username: "root", role: "super-admin" },
-    { id: "2", username: "admin1", role: "admin" },
-    { id: "3", username: "staff1", role: "staff" },
-    { id: "4", username: "finance1", role: "keuangan" },
-];
+import { useAuth } from "@/features/auth/store/auth.store";
 
 export function RoleManagementTable({ actorRole }: { actorRole: Role }) {
-    const [users, setUsers] = useState<AppUser[]>(dummyUsers);
+    const { user } = useAuth();
+    const [users, setUsers] = useState<AppUser[]>([
+        { id: "1", username: user?.username ?? "", role: "super-admin" },
+    ]);
 
     const assignableRoles = useMemo(() => manageableRoles(actorRole), [actorRole]);
 

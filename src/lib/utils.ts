@@ -10,13 +10,10 @@ export function cn(...inputs: ClassValue[]) {
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   "super-admin": ["role_management:view", "users:create", "users:update", "users:delete"],
-  "admin": ["role_management:view", "users:update"],
   staff: [],
-  keuangan: [],
 };
 
-const ADMIN_MANAGEABLE_TARGETS: Role[] = ["staff", "keuangan"];
-const SUPER_ADMIN_MANAGEABLE_TARGETS: Role[] = ["super-admin", "admin", "staff", "keuangan"];
+const SUPER_ADMIN_MANAGEABLE_TARGETS: Role[] = ["staff"];
 
 export function hasPermission(role: Role, perm: Permission) {
   return ROLE_PERMISSIONS[role]?.includes(perm) ?? false;
@@ -28,13 +25,11 @@ export function canViewRoleManagement(role: Role) {
 
 export function canManageTargetRole(actorRole: Role, targetRole: Role) {
   if (actorRole === "super-admin") return SUPER_ADMIN_MANAGEABLE_TARGETS.includes(targetRole);
-  if (actorRole === "admin") return ADMIN_MANAGEABLE_TARGETS.includes(targetRole);
   return false;
 }
 
 export function manageableRoles(actorRole: Role): Role[] {
   if (actorRole === "super-admin") return [...SUPER_ADMIN_MANAGEABLE_TARGETS];
-  if (actorRole === "admin") return [...ADMIN_MANAGEABLE_TARGETS];
   return [];
 }
 

@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/features/auth/store/auth.store";
 
-type Role = "super-admin" | "admin" | "staff" | "keuangan";
+type Role = "super-admin" | "staff";
 
 export function RequireRole(props: { allowed: Role[] }) {
     const { isAuthenticated, user } = useAuth();
